@@ -76,11 +76,12 @@ void delete(BinarySearchTree *self, int value) {
     free(trash);
     
 }
-void show(Node *node) {
+void show(Node *node, int rank) {
     if (node != NULL) {
-        printf("%d ", node->value);
-        show(node->child_left);
-        show(node->child_right);
+        printf("%d: %d\n", rank, node->value);
+        show(node->child_left, rank + 1);
+        show(node->child_right, rank + 1);
+        
     }
 }
 
@@ -100,10 +101,9 @@ int main() {
         printf("60 Not Found\n");
     }
     
-    show(tree->root);
-    printf("\n");
+    show(tree->root, 0);
     delete(tree, 30);
-    show(tree->root);
+    show(tree->root, 0);
 
     return 0;
 }
