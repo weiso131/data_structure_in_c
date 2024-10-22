@@ -1,44 +1,37 @@
 #include<stdlib.h>
 #include<stdio.h>
+#include "queue.h"
 
-typedef struct node {
-    int value;
-    struct node *next;
-}Node;
 
-Node* createNode(int data) {
-    Node *node = malloc(sizeof(Node));
+
+QueueNode* createNode(QUEUE_VALUE_TYPE data) {
+    QueueNode *node = malloc(sizeof(QueueNode));
     node->value = data;
     node->next = NULL;
     return node;
 }
 
 
-typedef struct queue {
-    Node *front, *tail;
-    void (*push)(struct queue*, int);
-    void (*pop)(struct queue*);
-    int (*get_front)(struct queue*);
-}Queue;
 
-void push(Queue *self, int value) {
-    Node *new_node = createNode(value);
+
+void push(Queue *self, QUEUE_VALUE_TYPE value) {
+    QueueNode *new_node = createNode(value);
     self->tail->next = new_node;
     self->tail = new_node;
 }
 void pop(Queue *self) {
-    Node *trash = self->front->next;
+    QueueNode *trash = self->front->next;
     self->front->next = trash->next;
     free(trash);
 }
 
-int get_front(Queue *self) {
+QUEUE_VALUE_TYPE get_front(Queue *self) {
     return self->front->next->value;
 }
 
 Queue* createQueue() {
     Queue *queue = malloc(sizeof(Queue));
-    queue->front = malloc(sizeof(Node));
+    queue->front = malloc(sizeof(QueueNode));
     queue->front->next = NULL;
     queue->tail = queue->front;
     
