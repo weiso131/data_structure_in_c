@@ -1,46 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct node {
-    int value;
-    struct node *next;
-}Node;
+#define STACK_TYPE int
+typedef struct stack_node {
+    STACK_TYPE value;
+    struct stack_node *next;
+}StackNode;
 
-Node* create_node(int value, Node* next) {
-    Node* new_node = (Node*)malloc(sizeof(Node));
+StackNode* create_node(STACK_TYPE value, StackNode* next) {
+    StackNode* new_node = (StackNode*)malloc(sizeof(StackNode));
     new_node->value = value;
     new_node->next = next;
     return new_node;
 }
 
 typedef struct stack {
-    Node* top;
+    StackNode* top;
     int size;
-    void (*push)(struct stack*, int);
+    void (*push)(struct stack*, STACK_TYPE);
     void (*pop)(struct stack*);
-    int (*get_top)(struct stack*);
+    STACK_TYPE (*get_top)(struct stack*);
 }Stack;
 
-void push(Stack* self, int value) {
-    Node *new_node = create_node(value, self->top);
+void push(Stack* self, STACK_TYPE value) {
+    StackNode *new_node = create_node(value, self->top);
     self->top = new_node;
     self->size++;
 }
 
 void pop(Stack* self) {
-    Node *trash = self->top;
-    Node **top = &(self->top);
-    *top = (*top)->next;
+    StackNode *trash = self->top;
+    self->top = (self->top)->next;
     self->size--;
     free(trash);
 }
 
-int get_top(Stack* self) {
+STACK_TYPE get_top(Stack* self) {
     return self->top->value;
 }
 
 Stack* create_stack() {
-    Node* top = NULL;
+    StackNode* top = NULL;
     Stack* new_stack = (Stack*)malloc(sizeof(Stack));
     *new_stack = (Stack){top, 0, &push, &pop, &get_top};
 

@@ -1,28 +1,15 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include "heap.h"
 
-#define VALUE_TYPE int
-
-typedef struct node {
-    struct node *left, *right, *parent;
-    VALUE_TYPE value;
-    char is_root;
-}Node;
-
-Node *create_node(VALUE_TYPE value, char is_root) {
-    Node *node = malloc(sizeof(Node));
+HeapNode *create_node(HEAP_VALUE_TYPE value, char is_root) {
+    HeapNode *node = malloc(sizeof(HeapNode));
     node->left = NULL;
     node->right = NULL;
     node->value = value;
     node->is_root = is_root;
     return node;
 }
-
-
-typedef struct heap {
-    Node *root;
-    int node_count;
-}Heap;
 
 Heap *create_heap() {
     Heap *heap = malloc(sizeof(Heap));
@@ -31,16 +18,16 @@ Heap *create_heap() {
     return heap;
 }
 
-void swap(VALUE_TYPE *a, VALUE_TYPE *b) {
+void swap(HEAP_VALUE_TYPE *a, HEAP_VALUE_TYPE *b) {
     *a = *a ^ *b;
     *b = *a ^ *b;
     *a = *a ^ *b;
 }
 
-void get_last_node(Heap *heap, Node **parent, char *last_bit) {
+void get_last_node(Heap *heap, HeapNode **parent, char *last_bit) {
     int node_count = heap->node_count + 1;
     char first = 0;
-    Node **current = &(heap->root);
+    HeapNode **current = &(heap->root);
     for (int i = 31;i >= 0;i--) {
         char bit = (node_count >> i) & 1;
         if (bit) first = 1;
@@ -57,9 +44,9 @@ void get_last_node(Heap *heap, Node **parent, char *last_bit) {
     }
 }
 
-void insert(Heap *heap, VALUE_TYPE value) {
-    Node *new_node = create_node(value, 0);
-    Node *parent = NULL;
+void insert_node(Heap *heap, HEAP_VALUE_TYPE value) {
+    HeapNode *new_node = create_node(value, 0);
+    HeapNode *parent = NULL;
     char last_bit = 0;
     get_last_node(heap, &parent, &last_bit);
     heap->node_count++;
@@ -77,9 +64,9 @@ void insert(Heap *heap, VALUE_TYPE value) {
 
     
 }
-void delete(Heap *heap) {
-    Node *top = heap->root->right;
-    Node *last_parent = NULL, *last_node = NULL;
+void delete_node(Heap *heap) {
+    HeapNode *top = heap->root->right;
+    HeapNode *last_parent = NULL, *last_node = NULL;
     char last_bit = 0;
     heap->node_count--;
     get_last_node(heap, &last_parent, &last_bit);
@@ -97,7 +84,7 @@ void delete(Heap *heap) {
     free(last_node);
 
     while (top->right != NULL && top->left != NULL && (top->value > top->right->value || top->value > top->left->value)) {
-        Node *child = (top->right->value < top->left->value)? top->right : top->left;
+        HeapNode *child = (top->right->value < top->left->value)? top->right : top->left;
         swap(&top->value, &child->value);
         top = child;
     }
@@ -116,13 +103,13 @@ void delete(Heap *heap) {
 
 int main() {
     Heap *heap = create_heap();
-    insert(heap, 10);
-    insert(heap, 6);
-    insert(heap, 4);
-    insert(heap, 3);
-    insert(heap, 2);
-    delete(heap);
-    delete(heap);
-    delete(heap);
+    insert_node(heap, 10);
+    insert_node(heap, 6);
+    insert_node(heap, 4);
+    insert_node(heap, 3);
+    insert_node(heap, 2);
+    delete_node(heap);
+    delete_node(heap);
+    delete_node(heap);
     printf("heap top: %d\n", heap->root->right->value);
 }

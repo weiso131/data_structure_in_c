@@ -22,6 +22,8 @@ void push(Queue *self, QUEUE_VALUE_TYPE value) {
 void pop(Queue *self) {
     QueueNode *trash = self->front->next;
     self->front->next = trash->next;
+    if (trash->next == NULL)
+        self->tail = self->front;
     free(trash);
 }
 
