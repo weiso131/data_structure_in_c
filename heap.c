@@ -83,6 +83,10 @@ void delete_node(Heap *heap) {
     swap(&top->value, &last_node->value);
     free(last_node);
 
+    if (top == last_node)
+        return;
+
+
     while (top->right != NULL && top->left != NULL && (top->value > top->right->value || top->value > top->left->value)) {
         HeapNode *child = (top->right->value < top->left->value)? top->right : top->left;
         swap(&top->value, &child->value);
@@ -111,5 +115,9 @@ int main() {
     delete_node(heap);
     delete_node(heap);
     delete_node(heap);
+    delete_node(heap);
+    printf("heap top: %d\n", heap->root->right->value);
+    delete_node(heap);
+    insert_node(heap, 2);
     printf("heap top: %d\n", heap->root->right->value);
 }
