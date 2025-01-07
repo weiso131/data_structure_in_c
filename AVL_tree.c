@@ -210,8 +210,6 @@ void __kill_child(Node *target) {
     }
     
 }
-
-
 void delete(BinarySearchTree *self, int value) {
     Node *target = search(self, value);
     Node *replacement = __find_replacement(target);
@@ -225,7 +223,6 @@ void delete(BinarySearchTree *self, int value) {
         free(replacement);
     }
     else {
-
         target->height = 0;
         __maintain(self, target);
         __kill_child(target);
