@@ -16,14 +16,17 @@ int abs(int a) {
 
 typedef struct node {
     int value, height;
-    struct node *child_left, *child_right, *mother;
+    struct node *mother;
+    struct node **children;
 }Node;
 
 Node *create_node(int value) {
     Node *node = malloc(sizeof(Node));
     node->value = value;
     node->height = 1;
-    node->child_left = node->child_right = node->mother = NULL;
+    node->mother = NULL;
+    node->children = (Node**)malloc(sizeof(Node*) * 2);
+    return node;
 }
 
 typedef struct binary_search_tree {
@@ -33,112 +36,80 @@ typedef struct binary_search_tree {
 BinarySearchTree* create_binary_search_tree() {
     BinarySearchTree *tree = malloc( sizeof( BinarySearchTree ) );
     tree->root = NULL;
+    return tree;
 }
-
-
 Node *__search_parent(BinarySearchTree *self, int value) {
     Node *current = self->root;
     while (1) {
-        Node *child = NULL;
-        if (current->value > value) 
-            child = current->child_left;
-        else 
-            child = current->child_right;
-        if (child == NULL || child->value == value) {
+        Node *child = current->children[value > current->value];
+        if (child == NULL || child->value == value) 
             return current;
-        }
         current = child;
-
     }
+    return current;
 }
 
 void __update_height(Node *node) {
     int right = 0, left = 0;
-    if (node->child_right != NULL) right = node->child_right->height;
-    if (node->child_left != NULL) left = node->child_left->height;
+    if (node->children[1] != NULL) right = node->children[1]->height;
+    if (node->children[0] != NULL) left = node->children[0]->height;
     node->height = max(right, left) + 1;
 }
 
 int __get_bf(Node *node) {
     int right = 0, left = 0;
-    if (node->child_right != NULL) right = node->child_right->height;
-    if (node->child_left != NULL) left = node->child_left->height;
+    if (node->children[1] != NULL) right = node->children[1]->height;
+    if (node->children[0] != NULL) left = node->children[0]->height;
     return left - right;
 }
 
-#define __rotation_parent {\
-    if (a->mother != NULL) {\
-        b->mother = a->mother;\
-        if (a->mother->value > a->value)\
-            a->mother->child_left = b;\
-        else\
-            a->mother->child_right = b;\
-    }\
-    else {\
-        tree->root = b;\
-        b->mother = NULL;\
-    }\
+void __rotation_base(Node *node, BinarySearchTree *tree, char ll) {
+    Node *a = node, *b = a->children[!ll];
+    Node *move_child = b->children[ll];
+    if (a->mother != NULL) {
+        b->mother = a->mother;
+        a->mother->children[a->mother->value < a->value] = b;
+    }
+    else {
+        tree->root = b;
+        b->mother = NULL;
+    }
+    a->mother = b;
+    b->children[ll] = a;
+    a->children[!ll] = move_child;
+    if (move_child != NULL) move_child->mother = a;
+    __update_height(a);
+    __update_height(b);
 }
 
 void __ll_rotation(Node *node, BinarySearchTree *tree) {
-    
-    Node *a = node, *b = a->child_left;
-    Node *right1 = b->child_right;
-    
-    __rotation_parent;
-    
-    a->mother = b;
-    b->child_right = a;
-    a->child_left = right1;
-    if (right1 != NULL) right1->mother = a;
-    __update_height(a);
-    __update_height(b);
+    __rotation_base(node, tree, 1);
 }
 void __rr_rotation(Node *node, BinarySearchTree *tree) {
-    Node *a = node, *b = a->child_right;
-    Node *left1 = b->child_left;
-    
-    __rotation_parent;
-    a->mother = b;
-    b->child_left = a;
-    a->child_right = left1;
-    if (left1 != NULL) left1->mother = a;
-    __update_height(a);
-    __update_height(b);
-}
-
-void __lr_rotation(Node *node, BinarySearchTree *tree) {
-    Node *a = node, *b = a->child_left;
-    __rr_rotation(b, tree);
-    __ll_rotation(a, tree);
-}
-void __rl_rotation(Node *node, BinarySearchTree *tree) {
-    Node *a = node, *b = a->child_right;
-    __ll_rotation(b, tree);
-    __rr_rotation(a, tree);
+    __rotation_base(node, tree, 0);
 }
 void __rotation(Node *node, int bf, BinarySearchTree *tree) {
     int first_child = (bf == -2), second_child = 0;
-    Node *first_node = node->child_left;
-    if (first_child)//走右邊
-        first_node = node->child_right;
-    if ((first_node->child_left == NULL) || (first_node->child_right != NULL && \
-    first_node->child_right > first_node->child_left))
+    Node *first_node = node->children[first_child];
+
+    if ((first_node->children[0] == NULL) || (first_node->children[1] != NULL && \
+            first_node->children[1]->height > first_node->children[0]->height))
         second_child = 1;
-
-
-    if (first_child == 0 && second_child == 0) //LL 
+    if (first_child == 0 && second_child == 0) {//LL  
         __ll_rotation(node, tree);
-        
-    else if (first_child == 1 && second_child == 1) {//RR 
-        printf("test\n");
-        __rr_rotation(node, tree);
-        
     }
-    else if (first_child == 1 && second_child == 0) //RL
-        __rl_rotation(node, tree);
-    else //LR
-        __lr_rotation(node, tree);
+    else if (first_child == 1 && second_child == 1) //RR 
+        __rr_rotation(node, tree);
+
+    else if (first_child == 1 && second_child == 0) {//RL
+
+        __ll_rotation(node->children[1], tree);
+        __rr_rotation(node, tree);
+    }
+    else { //LR
+        __rr_rotation(node->children[0], tree);
+        __ll_rotation(node, tree);  
+    } 
 }
 
 void __maintain(BinarySearchTree *self, Node *node) {
@@ -151,11 +122,9 @@ void __maintain(BinarySearchTree *self, Node *node) {
             __update_height(node);
             if (old_height == node->height) break;
         }
-        else {
+        else 
             __rotation(node, bf, self);
-        }
     }
-
 }
 
 
@@ -166,54 +135,41 @@ void insert(BinarySearchTree *self, int value) {
         return;
     }
     Node *parent = __search_parent(self, value);
-
-    if (parent->value < value) 
-        parent->child_right = new_node;
-    else
-        parent->child_left = new_node;
+    parent->children[parent->value < value] = new_node;
     new_node->mother = parent;
     __maintain(self, new_node);
-    
 }
 
 Node* search(BinarySearchTree *self, int value) {
     if (self->root->value == value) 
         return self->root;
     Node *parent = __search_parent(self, value);
-    if (parent->value < value) 
-        return parent->child_right;
-    else
-        return parent->child_left;
+    return parent->children[parent->value < value];
 }   
 
-Node *__find_replacement(Node *target) {
+Node *__find_replacement_base(Node *target, char right_child) {
     Node *replacement = NULL;
-    if (target->child_left != NULL) {
-        replacement = target->child_left;
-        while (replacement->child_right != NULL)
-            replacement = replacement->child_right;
-    }
-    else if (target->child_right != NULL) {
-        replacement = target->child_right;
-        while (replacement->child_left != NULL)
-            replacement = replacement->child_left;
+    if (target->children[right_child] != NULL) {
+        replacement = target->children[right_child];
+        while (replacement->children[!right_child] != NULL)
+            replacement = replacement->children[!right_child];
     }
     return replacement;
 }
 
+Node *__find_replacement(Node *target) {
+    Node *replacement = __find_replacement_base(target, 0);
+    if (replacement == NULL) __find_replacement_base(target, 1);
+    return replacement;
+}
+
 void __kill_child(Node *target) {
-    if (target->mother != NULL) {
-        if (target->mother->value > target->value) 
-            target->mother->child_left = NULL;
-        else
-            target->mother->child_right = NULL;
-    }
-    
+    if (target->mother != NULL) 
+        target->mother->children[target->value > target->mother->value] = NULL;
 }
 void delete(BinarySearchTree *self, int value) {
     Node *target = search(self, value);
     Node *replacement = __find_replacement(target);
-
     if (replacement != NULL) {
         int save = replacement->value;
         Node *maintain_target = replacement->mother;
@@ -226,32 +182,55 @@ void delete(BinarySearchTree *self, int value) {
         target->height = 0;
         __maintain(self, target);
         __kill_child(target);
+        if (self->root == target) 
+            self->root = NULL;
         free(target);
     } 
 }
 
-void show(Node *node, int rank) {
+
+
+void get_form(Node *node, int index, int *array) {
     if (node != NULL) {
-        printf("%d: %d %d\n", rank, node->value, node->height);
-        show(node->child_left, rank + 1);
-        show(node->child_right, rank + 1);
-        
+        array[index] = node->value;
+        get_form(node->children[0], (index << 1), array);
+        get_form(node->children[1], (index << 1) + 1, array);
     }
 }
 
+void tree_show(BinarySearchTree *tree) {
+    int *array = calloc(256, sizeof(int));
+    get_form(tree->root, 1, array);
+    int check = 2;
+    for (int i = 1;i < 256;i++) {
+        if (i == check) {
+            printf("\n");
+            check *= 2;
+        }
+        printf("%d ", array[i]);
+    }
+
+}
+
+
 int main() {
     BinarySearchTree *tree = create_binary_search_tree();
-    insert(tree, 33);
-    insert(tree, 13);
-    insert(tree, 53);
-    insert(tree, 9);
-    insert(tree, 21);
-    insert(tree, 61);
-    insert(tree, 8);
-    insert(tree, 11);
-    delete(tree, 13);
-
-    show(tree->root, 0);
+    char op[10];
+    while (1) {
+        scanf("%s", op);
+        int v;
+        if (op[0] == 'i') {
+            scanf("%d", &v);
+            insert(tree, v);
+        }
+        else if (op[0] == 'd') {
+            scanf("%d", &v);
+            delete(tree, v);
+        }
+        else if (op[0] == 'e')
+            break;
+    }
+    tree_show(tree);
 
     return 0;
 }
