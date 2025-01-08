@@ -26,6 +26,8 @@ Node *create_node(int value) {
     node->height = 1;
     node->mother = NULL;
     node->children = (Node**)malloc(sizeof(Node*) * 2);
+    node->children[0] = NULL;
+    node->children[1] = NULL;
     return node;
 }
 
@@ -151,15 +153,16 @@ Node *__find_replacement_base(Node *target, char right_child) {
     Node *replacement = NULL;
     if (target->children[right_child] != NULL) {
         replacement = target->children[right_child];
-        while (replacement->children[!right_child] != NULL)
+        while (replacement->children[!right_child] != NULL) 
             replacement = replacement->children[!right_child];
+            
     }
     return replacement;
 }
 
 Node *__find_replacement(Node *target) {
     Node *replacement = __find_replacement_base(target, 0);
-    if (replacement == NULL) __find_replacement_base(target, 1);
+    if (replacement == NULL) replacement = __find_replacement_base(target, 1);
     return replacement;
 }
 
@@ -191,6 +194,7 @@ void delete(BinarySearchTree *self, int value) {
 
 
 void get_form(Node *node, int index, int *array) {
+    printf("%p\n", node);
     if (node != NULL) {
         array[index] = node->value;
         get_form(node->children[0], (index << 1), array);
